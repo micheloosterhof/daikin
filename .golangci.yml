@@ -13,6 +13,9 @@ linters:
         - (io.Closer).Close
         - (net.Conn).Close
         - (net.PacketConn).Close
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
 
 formatters:
   enable:
