@@ -6,6 +6,7 @@
 package daikin
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -31,7 +32,7 @@ func newTestClient(t *testing.T, response string) (*Client, *http.Request) {
 
 func TestRegister(t *testing.T) {
 	c, req := newTestClient(t, "ret=OK")
-	if err := c.Register("0512852162213"); err != nil {
+	if err := c.Register(t.Context(), "0512852162213"); err != nil {
 		t.Fatalf("Register returned error: %v", err)
 	}
 	if req.URL.Path != "/common/register_terminal" {
@@ -47,7 +48,7 @@ func TestRegister(t *testing.T) {
 
 func TestControlInfo(t *testing.T) {
 	c, req := newTestClient(t, "ret=OK,pow=1,mode=3,adv=,stemp=23.0,shum=0,f_rate=4,f_dir=2")
-	ci, err := c.ControlInfo()
+	ci, err := c.ControlInfo(t.Context())
 	if err != nil {
 		t.Fatalf("ControlInfo returned error: %v", err)
 	}
@@ -62,7 +63,7 @@ func TestControlInfo(t *testing.T) {
 
 func TestSensorInfo(t *testing.T) {
 	c, _ := newTestClient(t, "ret=OK,htemp=24.0,hhum=65,otemp=30.0,err=0,cmpfreq=24")
-	si, err := c.SensorInfo()
+	si, err := c.SensorInfo(t.Context())
 	if err != nil {
 		t.Fatalf("SensorInfo returned error: %v", err)
 	}
@@ -75,7 +76,7 @@ func TestSensorInfo(t *testing.T) {
 func TestSetControl(t *testing.T) {
 	c, req := newTestClient(t, "ret=OK,adv=")
 	ci := ControlInfo{Power: true, Mode: "3", SetTemp: "24.0", SetHumidity: "0", FanRate: "A", FanDir: "0"}
-	if err := c.SetControl(ci); err != nil {
+	if err := c.SetControl(t.Context(), ci); err != nil {
 		t.Fatalf("SetControl returned error: %v", err)
 	}
 	if req.URL.Path != "/aircon/set_control_info" {
@@ -89,7 +90,7 @@ func TestSetControl(t *testing.T) {
 
 func TestBasicInfo(t *testing.T) {
 	c, _ := newTestClient(t, officeBasicInfo)
-	dev, err := c.BasicInfo()
+	dev, err := c.BasicInfo(t.Context())
 	if err != nil {
 		t.Fatalf("BasicInfo returned error: %v", err)
 	}
@@ -100,7 +101,7 @@ func TestBasicInfo(t *testing.T) {
 
 func TestRegisterAdapterError(t *testing.T) {
 	c, _ := newTestClient(t, "ret=PARAM NG")
-	if err := c.Register("badkey"); err == nil {
+	if err := c.Register(t.Context(), "badkey"); err == nil {
 		t.Fatal("expected error for ret=PARAM NG")
 	}
 }
@@ -124,7 +125,7 @@ func TestGetRetriesTransientError(t *testing.T) {
 	t.Cleanup(srv.Close)
 	c := NewClient(srv.Listener.Addr().String(), testUUID)
 	c.http = srv.Client()
-	if _, err := c.SensorInfo(); err != nil {
+	if _, err := c.SensorInfo(t.Context()); err != nil {
 		t.Fatalf("SensorInfo should succeed after one retry, got: %v", err)
 	}
 	if calls != 2 {
@@ -137,7 +138,7 @@ func TestGetRetriesTransientError(t *testing.T) {
 // the wire. Direct map access is intentional: Header.Get would canonicalize.
 func TestUUIDHeaderCasing(t *testing.T) {
 	c := NewClient("192.0.2.1", testUUID)
-	req, err := c.newRequest("/common/basic_info", nil)
+	req, err := c.newRequest(t.Context(), "/common/basic_info", nil)
 	if err != nil {
 		t.Fatalf("newRequest returned error: %v", err)
 	}
@@ -146,6 +147,25 @@ func TestUUIDHeaderCasing(t *testing.T) {
 	}
 	if _, ok := req.Header["X-Daikin-Uuid"]; ok {
 		t.Error("header must not be stored under the canonical X-Daikin-Uuid key")
+	}
+}
+
+func TestGetContextCanceled(t *testing.T) {
+	calls := 0
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		_, _ = w.Write([]byte("ret=OK"))
+	}))
+	t.Cleanup(srv.Close)
+	c := NewClient(srv.Listener.Addr().String(), testUUID)
+	c.http = srv.Client()
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	if err := c.Register(ctx, "0512852162213"); err == nil {
+		t.Fatal("expected error for canceled context")
+	}
+	if calls != 0 {
+		t.Errorf("server saw %d calls, want 0", calls)
 	}
 }
 

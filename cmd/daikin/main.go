@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -37,16 +38,17 @@ func main() {
 	if len(os.Args) < 2 {
 		usage()
 	}
+	ctx := context.Background()
 	var err error
 	switch os.Args[1] {
 	case "discover":
-		err = cmdDiscover()
+		err = cmdDiscover(ctx)
 	case "register":
-		err = cmdRegister(os.Args[2:])
+		err = cmdRegister(ctx, os.Args[2:])
 	case "status":
-		err = cmdStatus(os.Args[2:])
+		err = cmdStatus(ctx, os.Args[2:])
 	case "set":
-		err = cmdSet(os.Args[2:])
+		err = cmdSet(ctx, os.Args[2:])
 	default:
 		usage()
 	}
@@ -68,12 +70,12 @@ func loadConfig() (*daikin.Config, string, error) {
 	return cfg, path, nil
 }
 
-func cmdDiscover() error {
+func cmdDiscover(ctx context.Context) error {
 	cfg, _, err := loadConfig()
 	if err != nil {
 		return err
 	}
-	devices, err := daikin.Discover(3 * time.Second)
+	devices, err := daikin.Discover(ctx, 3*time.Second)
 	if err != nil {
 		return err
 	}
@@ -91,7 +93,7 @@ func cmdDiscover() error {
 	return nil
 }
 
-func cmdRegister(args []string) error {
+func cmdRegister(ctx context.Context, args []string) error {
 	if len(args) != 2 {
 		usage()
 	}
@@ -102,10 +104,10 @@ func cmdRegister(args []string) error {
 	}
 	cfg.EnsureUUID()
 	client := daikin.NewClient(ip, cfg.UUID)
-	if err := client.Register(key); err != nil {
+	if err := client.Register(ctx, key); err != nil {
 		return fmt.Errorf("registering with %s: %w", ip, err)
 	}
-	dev, err := client.BasicInfo()
+	dev, err := client.BasicInfo(ctx)
 	if err != nil {
 		return err
 	}
@@ -117,13 +119,13 @@ func cmdRegister(args []string) error {
 	return nil
 }
 
-func printStatus(cfg *daikin.Config, dev daikin.ConfigDevice) error {
+func printStatus(ctx context.Context, cfg *daikin.Config, dev daikin.ConfigDevice) error {
 	client := daikin.NewClient(dev.IP, cfg.UUID)
-	ci, err := client.ControlInfo()
+	ci, err := client.ControlInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", dev.Name, err)
 	}
-	si, err := client.SensorInfo()
+	si, err := client.SensorInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("%s: %w", dev.Name, err)
 	}
@@ -138,7 +140,7 @@ func printStatus(cfg *daikin.Config, dev daikin.ConfigDevice) error {
 	return nil
 }
 
-func cmdStatus(args []string) error {
+func cmdStatus(ctx context.Context, args []string) error {
 	cfg, _, err := loadConfig()
 	if err != nil {
 		return err
@@ -151,14 +153,14 @@ func cmdStatus(args []string) error {
 		if !ok {
 			return fmt.Errorf("no registered device %q", args[0])
 		}
-		return printStatus(cfg, dev)
+		return printStatus(ctx, cfg, dev)
 	}
 	if len(cfg.Devices) == 0 {
 		return fmt.Errorf("no registered devices; run: daikin register <ip> <key>")
 	}
 	failed := 0
 	for _, dev := range cfg.Devices {
-		if err := printStatus(cfg, dev); err != nil {
+		if err := printStatus(ctx, cfg, dev); err != nil {
 			fmt.Fprintf(os.Stderr, "daikin: %v\n", err)
 			failed++
 		}
@@ -169,7 +171,7 @@ func cmdStatus(args []string) error {
 	return nil
 }
 
-func cmdSet(args []string) error {
+func cmdSet(ctx context.Context, args []string) error {
 	fs := flag.NewFlagSet("set", flag.ExitOnError)
 	power := fs.String("power", "", "on or off")
 	mode := fs.String("mode", "", "auto, dry, cool, heat or fan")
@@ -193,7 +195,7 @@ func cmdSet(args []string) error {
 		return fmt.Errorf("no registered device %q", name)
 	}
 	client := daikin.NewClient(dev.IP, cfg.UUID)
-	ci, err := client.ControlInfo()
+	ci, err := client.ControlInfo(ctx)
 	if err != nil {
 		return err
 	}
@@ -226,8 +228,8 @@ func cmdSet(args []string) error {
 		}
 	}
 
-	if err := client.SetControl(ci); err != nil {
+	if err := client.SetControl(ctx, ci); err != nil {
 		return err
 	}
-	return printStatus(cfg, dev)
+	return printStatus(ctx, cfg, dev)
 }

@@ -6,6 +6,7 @@
 package daikin
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"sort"
@@ -39,13 +40,18 @@ func DeviceFromBasicInfo(ip, body string) (Device, error) {
 }
 
 // Discover broadcasts the discovery probe and collects responses until the
-// timeout elapses. Units that answer with unparseable payloads are skipped.
-func Discover(timeout time.Duration) ([]Device, error) {
+// timeout elapses or ctx is canceled. Units that answer with unparseable
+// payloads are skipped.
+func Discover(ctx context.Context, timeout time.Duration) ([]Device, error) {
 	conn, err := net.ListenPacket("udp4", ":0")
 	if err != nil {
 		return nil, err
 	}
 	defer conn.Close()
+
+	// Cancellation unblocks the read loop by expiring the deadline.
+	stop := context.AfterFunc(ctx, func() { _ = conn.SetReadDeadline(time.Now()) })
+	defer stop()
 
 	dst := &net.UDPAddr{IP: net.IPv4bcast, Port: discoveryPort}
 	if _, err := conn.WriteTo([]byte(discoveryProbe), dst); err != nil {
@@ -71,6 +77,9 @@ func Discover(timeout time.Duration) ([]Device, error) {
 			continue
 		}
 		devices = append(devices, dev)
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	sort.Slice(devices, func(i, j int) bool { return devices[i].Name < devices[j].Name })
 	return devices, nil

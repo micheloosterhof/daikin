@@ -6,6 +6,7 @@
 package daikin
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"io"
@@ -64,12 +65,12 @@ func NewClient(host, uuid string) *Client {
 // newRequest builds a GET request for the adapter. The UUID header key is
 // written into the header map directly because the adapter matches it
 // case-sensitively and rejects the canonicalized X-Daikin-Uuid form.
-func (c *Client) newRequest(path string, query url.Values) (*http.Request, error) {
+func (c *Client) newRequest(ctx context.Context, path string, query url.Values) (*http.Request, error) {
 	u := c.baseURL + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
 	}
-	req, err := http.NewRequest(http.MethodGet, u, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -77,16 +78,16 @@ func (c *Client) newRequest(path string, query url.Values) (*http.Request, error
 	return req, nil
 }
 
-func (c *Client) get(path string, query url.Values) (map[string]string, error) {
-	req, err := c.newRequest(path, query)
+func (c *Client) get(ctx context.Context, path string, query url.Values) (map[string]string, error) {
+	req, err := c.newRequest(ctx, path, query)
 	if err != nil {
 		return nil, err
 	}
 	resp, err := c.http.Do(req)
-	if err != nil {
+	if err != nil && ctx.Err() == nil {
 		// The adapter's embedded server drops connections now and then;
 		// one retry rides that out.
-		req, err = c.newRequest(path, query)
+		req, err = c.newRequest(ctx, path, query)
 		if err != nil {
 			return nil, err
 		}
@@ -112,14 +113,14 @@ func (c *Client) get(path string, query url.Values) (map[string]string, error) {
 
 // Register associates the client's UUID with the adapter using the 13-digit
 // key printed on the unit. This only needs to succeed once per adapter.
-func (c *Client) Register(key string) error {
-	_, err := c.get("/common/register_terminal", url.Values{"key": {key}})
+func (c *Client) Register(ctx context.Context, key string) error {
+	_, err := c.get(ctx, "/common/register_terminal", url.Values{"key": {key}})
 	return err
 }
 
 // BasicInfo fetches the unit's identity as a Device.
-func (c *Client) BasicInfo() (Device, error) {
-	kv, err := c.get("/common/basic_info", nil)
+func (c *Client) BasicInfo(ctx context.Context) (Device, error) {
+	kv, err := c.get(ctx, "/common/basic_info", nil)
 	if err != nil {
 		return Device{}, err
 	}
@@ -131,8 +132,8 @@ func (c *Client) BasicInfo() (Device, error) {
 }
 
 // ControlInfo fetches the unit's current settable state.
-func (c *Client) ControlInfo() (ControlInfo, error) {
-	kv, err := c.get("/aircon/get_control_info", nil)
+func (c *Client) ControlInfo(ctx context.Context) (ControlInfo, error) {
+	kv, err := c.get(ctx, "/aircon/get_control_info", nil)
 	if err != nil {
 		return ControlInfo{}, err
 	}
@@ -147,8 +148,8 @@ func (c *Client) ControlInfo() (ControlInfo, error) {
 }
 
 // SensorInfo fetches the unit's sensor readings.
-func (c *Client) SensorInfo() (SensorInfo, error) {
-	kv, err := c.get("/aircon/get_sensor_info", nil)
+func (c *Client) SensorInfo(ctx context.Context) (SensorInfo, error) {
+	kv, err := c.get(ctx, "/aircon/get_sensor_info", nil)
 	if err != nil {
 		return SensorInfo{}, err
 	}
@@ -162,12 +163,12 @@ func (c *Client) SensorInfo() (SensorInfo, error) {
 
 // SetControl applies the given state to the unit. The adapter requires all
 // fields on every set, so callers should start from the current ControlInfo.
-func (c *Client) SetControl(ci ControlInfo) error {
+func (c *Client) SetControl(ctx context.Context, ci ControlInfo) error {
 	pow := "0"
 	if ci.Power {
 		pow = "1"
 	}
-	_, err := c.get("/aircon/set_control_info", url.Values{
+	_, err := c.get(ctx, "/aircon/set_control_info", url.Values{
 		"pow":    {pow},
 		"mode":   {ci.Mode},
 		"stemp":  {ci.SetTemp},
