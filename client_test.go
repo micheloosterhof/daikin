@@ -102,6 +102,33 @@ func TestRegisterAdapterError(t *testing.T) {
 	}
 }
 
+// The adapters drop connections under load, so a request that fails at the
+// transport level is retried once.
+func TestGetRetriesTransientError(t *testing.T) {
+	calls := 0
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		if calls == 1 {
+			conn, _, err := w.(http.Hijacker).Hijack()
+			if err != nil {
+				t.Fatalf("hijack failed: %v", err)
+			}
+			conn.Close()
+			return
+		}
+		w.Write([]byte("ret=OK,htemp=24.0,hhum=65,otemp=30.0,err=0,cmpfreq=24"))
+	}))
+	t.Cleanup(srv.Close)
+	c := NewClient(srv.Listener.Addr().String(), testUUID)
+	c.http = srv.Client()
+	if _, err := c.SensorInfo(); err != nil {
+		t.Fatalf("SensorInfo should succeed after one retry, got: %v", err)
+	}
+	if calls != 2 {
+		t.Errorf("server saw %d calls, want 2", calls)
+	}
+}
+
 // The adapter matches the UUID header name case-sensitively and rejects Go's
 // canonical X-Daikin-Uuid form, so the header key must stay exactly as-is on
 // the wire. Direct map access is intentional: Header.Get would canonicalize.

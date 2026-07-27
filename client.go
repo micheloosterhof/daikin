@@ -79,6 +79,15 @@ func (c *Client) get(path string, query url.Values) (map[string]string, error) {
 	}
 	resp, err := c.http.Do(req)
 	if err != nil {
+		// The adapter's embedded server drops connections now and then;
+		// one retry rides that out.
+		req, err = c.newRequest(path, query)
+		if err != nil {
+			return nil, err
+		}
+		resp, err = c.http.Do(req)
+	}
+	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
