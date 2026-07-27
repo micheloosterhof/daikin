@@ -21,6 +21,7 @@ standard library only.
 | `discover.go` | UDP broadcast discovery on port 30050 |
 | `config.go` | JSON config store (`~/.config/daikin/config.json`): client UUID and registered devices |
 | `modes.go` | Name/code translation for mode, fan rate and swing |
+| `power.go` | Power consumption history (week and year queries) |
 | `parse.go` | Parses the adapter's `key=value,key=value` response format |
 | `cmd/daikin/` | CLI: `discover`, `register`, `status`, `set` |
 
@@ -29,16 +30,17 @@ Library code is package `daikin` at the repo root; each file has a matching
 
 ## Build and test
 
-```
-go build ./...        # build; CLI binary via: go build -o daikin ./cmd/daikin
-go test ./...         # unit tests (hermetic: httptest servers, temp dirs)
-go test -race ./...   # run before committing
-go vet ./...
-gofmt -l .            # must print nothing
-golangci-lint run
-```
+The Makefile is the entry point for all operations; CI runs the same targets.
 
-There is no Makefile; use the Go toolchain directly.
+```
+make build            # go build, CLI binary at ./daikin
+make test             # go test -race ./... (hermetic: httptest servers, temp dirs)
+make lint             # golangci-lint run
+make fmt              # gofmt -w .
+make spdx             # SPDX header compliance
+make check            # fmt + lint + spdx
+make coverage         # coverage report
+```
 
 ## Protocol constraints (do not "fix" these)
 
