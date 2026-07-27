@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # AGENTS.md
 
 Instructions for AI agents working in this repository.

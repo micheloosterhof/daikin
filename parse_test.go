@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Tests for parsing the Daikin adapter's key=value response format,
 // ABOUTME: including URL-encoded names and error responses.
 package daikin

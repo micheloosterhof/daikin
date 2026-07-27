@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Discovers Daikin wifi adapters on the local network by broadcasting
 // ABOUTME: the DAIKIN_UDP basic_info probe on UDP port 30050.
 package daikin

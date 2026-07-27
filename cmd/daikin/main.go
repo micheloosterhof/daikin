@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Command-line tool to discover, register and control Daikin
 // ABOUTME: air conditioners with BRP072C wifi adapters on the local network.
 package main

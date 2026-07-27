@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Parses the Daikin wifi adapter's response format: comma-separated
 // ABOUTME: key=value pairs with URL-encoded unit names.
 package daikin

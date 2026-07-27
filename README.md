@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # daikin
 
 Command-line tool and Go library to discover and control Daikin air

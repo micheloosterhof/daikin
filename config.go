@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: JSON config store for the CLI: the client UUID shared across all
 // ABOUTME: adapters and the list of registered devices with their keys.
 package daikin

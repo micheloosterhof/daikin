@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: HTTPS client for the Daikin BRP072C wifi adapter: registration,
 // ABOUTME: control and sensor queries authenticated by an X-Daikin-uuid header.
 package daikin

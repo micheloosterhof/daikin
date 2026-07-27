@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Tests for the HTTPS client that talks to a Daikin adapter using
 // ABOUTME: the X-Daikin-uuid header, exercised against a local TLS test server.
 package daikin

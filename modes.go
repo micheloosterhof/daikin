@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+// SPDX-License-Identifier: BSD-3-Clause
+
 // ABOUTME: Translates between human-friendly names for mode, fan rate and
 // ABOUTME: swing and the numeric codes the adapter protocol uses.
 package daikin
