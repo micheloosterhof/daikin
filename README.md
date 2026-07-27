@@ -56,6 +56,7 @@ the registered-UUID header. Endpoints verified present:
 | `/common/get_datetime` | adapter clock and region |
 | `/common/get_wifi_setting` | home-network SSID and key |
 | `/common/get_holiday` | holiday mode state |
+| `/common/get_regioncode` | region code |
 | `/aircon/get_model_info` | model capabilities (`elec=0`: no power metering) |
 | `/aircon/get_control_info` | settable state |
 | `/aircon/get_sensor_info` | room/outside temperature, humidity, compressor frequency |
