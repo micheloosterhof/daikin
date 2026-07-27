@@ -21,6 +21,7 @@ daikin discover                 # scan the local network for units
 daikin register <ip> <key>      # register with a unit (13-digit key on the adapter sticker)
 daikin status [name]            # show one unit, or all registered units
 daikin set <name> [flags]       # change settings
+daikin power [name]             # show energy consumption
 ```
 
 `set` flags: `-power on|off`, `-mode auto|dry|cool|heat|fan`, `-temp <celsius>`,
