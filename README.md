@@ -67,6 +67,11 @@ the registered-UUID header. Endpoints verified present:
 | `/aircon/get_day_power_ex`, `get_week_power_ex`, `get_year_power_ex` | heat/cool split consumption |
 | `/aircon/get_monitordata` | raw internal state |
 
+`/common/set_led?led=0|1` turns the adapter's status LEDs off and on. It is
+write-only: there is no `get_led`, and the current state is the `led` field of
+`basic_info`. Other `set_` endpoints may similarly exist without a matching
+`get_`.
+
 Removed relative to the older firmware: `/aircon/get_timer`, `/aircon/get_program`
 and `/aircon/get_scdltimer` all return 404 — on-device scheduling moved to the
 Daikin cloud service.
