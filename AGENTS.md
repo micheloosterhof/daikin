@@ -23,7 +23,7 @@ standard library only.
 | `modes.go` | Name/code translation for mode, fan rate and swing |
 | `power.go` | Power consumption history (week and year queries) |
 | `parse.go` | Parses the adapter's `key=value,key=value` response format |
-| `cmd/daikin/` | CLI: `discover`, `register`, `status`, `set` |
+| `cmd/daikin/` | CLI: `discover`, `register`, `status`, `set`, `power` |
 
 Library code is package `daikin` at the repo root; each file has a matching
 `_test.go` next to it.
