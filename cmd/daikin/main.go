@@ -153,10 +153,15 @@ func cmdStatus(args []string) error {
 	if len(cfg.Devices) == 0 {
 		return fmt.Errorf("no registered devices; run: daikin register <ip> <key>")
 	}
+	failed := 0
 	for _, dev := range cfg.Devices {
 		if err := printStatus(cfg, dev); err != nil {
 			fmt.Fprintf(os.Stderr, "daikin: %v\n", err)
+			failed++
 		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("%d of %d devices did not respond", failed, len(cfg.Devices))
 	}
 	return nil
 }
