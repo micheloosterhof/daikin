@@ -102,6 +102,23 @@ func TestRegisterAdapterError(t *testing.T) {
 	}
 }
 
+// The adapter matches the UUID header name case-sensitively and rejects Go's
+// canonical X-Daikin-Uuid form, so the header key must stay exactly as-is on
+// the wire. Direct map access is intentional: Header.Get would canonicalize.
+func TestUUIDHeaderCasing(t *testing.T) {
+	c := NewClient("192.0.2.1", testUUID)
+	req, err := c.newRequest("/common/basic_info", nil)
+	if err != nil {
+		t.Fatalf("newRequest returned error: %v", err)
+	}
+	if got := req.Header["X-Daikin-uuid"]; len(got) != 1 || got[0] != testUUID {
+		t.Errorf("Header[X-Daikin-uuid] = %v, want [%s]", got, testUUID)
+	}
+	if _, ok := req.Header["X-Daikin-Uuid"]; ok {
+		t.Error("header must not be stored under the canonical X-Daikin-Uuid key")
+	}
+}
+
 func urlValuesEqual(a, b url.Values) bool {
 	if len(a) != len(b) {
 		return false

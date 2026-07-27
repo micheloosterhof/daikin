@@ -56,7 +56,10 @@ func NewClient(host, uuid string) *Client {
 	}
 }
 
-func (c *Client) get(path string, query url.Values) (map[string]string, error) {
+// newRequest builds a GET request for the adapter. The UUID header key is
+// written into the header map directly because the adapter matches it
+// case-sensitively and rejects the canonicalized X-Daikin-Uuid form.
+func (c *Client) newRequest(path string, query url.Values) (*http.Request, error) {
 	u := c.baseURL + path
 	if len(query) > 0 {
 		u += "?" + query.Encode()
@@ -65,7 +68,15 @@ func (c *Client) get(path string, query url.Values) (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("X-Daikin-uuid", c.uuid)
+	req.Header["X-Daikin-uuid"] = []string{c.uuid}
+	return req, nil
+}
+
+func (c *Client) get(path string, query url.Values) (map[string]string, error) {
+	req, err := c.newRequest(path, query)
+	if err != nil {
+		return nil, err
+	}
 	resp, err := c.http.Do(req)
 	if err != nil {
 		return nil, err
