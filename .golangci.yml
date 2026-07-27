@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 Michel Oosterhof <michel@oosterhof.net>
+# SPDX-License-Identifier: CC0-1.0
+
+version: "2"
+
+linters:
+  enable:
+    - gocritic
+    - gosec
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (net.Conn).Close
+        - (net.PacketConn).Close
+
+formatters:
+  enable:
+    - gofmt

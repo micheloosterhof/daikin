@@ -21,7 +21,7 @@ func newTestClient(t *testing.T, response string) (*Client, *http.Request) {
 	lastReq := &http.Request{}
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		*lastReq = *r
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 	t.Cleanup(srv.Close)
 	c := NewClient(srv.Listener.Addr().String(), testUUID)
@@ -116,10 +116,10 @@ func TestGetRetriesTransientError(t *testing.T) {
 			if err != nil {
 				t.Fatalf("hijack failed: %v", err)
 			}
-			conn.Close()
+			_ = conn.Close()
 			return
 		}
-		w.Write([]byte("ret=OK,htemp=24.0,hhum=65,otemp=30.0,err=0,cmpfreq=24"))
+		_, _ = w.Write([]byte("ret=OK,htemp=24.0,hhum=65,otemp=30.0,err=0,cmpfreq=24"))
 	}))
 	t.Cleanup(srv.Close)
 	c := NewClient(srv.Listener.Addr().String(), testUUID)
@@ -141,7 +141,7 @@ func TestUUIDHeaderCasing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("newRequest returned error: %v", err)
 	}
-	if got := req.Header["X-Daikin-uuid"]; len(got) != 1 || got[0] != testUUID {
+	if got := req.Header["X-Daikin-uuid"]; len(got) != 1 || got[0] != testUUID { //nolint:staticcheck // the adapter requires this non-canonical key on the wire
 		t.Errorf("Header[X-Daikin-uuid] = %v, want [%s]", got, testUUID)
 	}
 	if _, ok := req.Header["X-Daikin-Uuid"]; ok {

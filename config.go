@@ -46,7 +46,7 @@ func DefaultConfigPath() (string, error) {
 
 // LoadConfig reads the config at path. A missing file yields an empty config.
 func LoadConfig(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // reading the caller-chosen config path is this function's purpose
 	if errors.Is(err, fs.ErrNotExist) {
 		return &Config{}, nil
 	}

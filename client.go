@@ -53,7 +53,9 @@ func NewClient(host, uuid string) *Client {
 		http: &http.Client{
 			Timeout: 10 * time.Second,
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				// The adapter serves a self-signed certificate, so there
+				// is nothing to verify against.
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
 			},
 		},
 	}
